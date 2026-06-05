@@ -1,0 +1,5 @@
+1. Create node_modules and package-lock.json: 
+	npm install firebase express cors.
+2. Create package.json: 
+	command: 
+		npm init -y
