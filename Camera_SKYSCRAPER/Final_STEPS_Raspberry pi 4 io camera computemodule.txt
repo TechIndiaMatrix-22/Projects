@@ -1,0 +1,343 @@
+******************************RPI 4 COMPUTE MODULE**********************************
+1. Burn the image into the IO Board, by disabling the emmc boot option by putting a jumper at j2. Let the image get burnt and the OS will be installed into the PI Board, PLEASE REMOVE THE JUMPER FROM J2 BEFORE MOVING TO STEP2.
+2. Place the Jumpers vertically @J6.
+3. Put camera in cam1 for now(The Black part facing top) on both IO Board and the camera.
+Lets enable the interface (i2c) from 
+	sudo raspi-config
+	
+4. Install the I²C tools:
+	sudo apt install -y i2c-tools
+then reboot the system.
+
+5. enter the updated configuration as it is as shown below:
+
+# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+#dtparam=i2s=on
+#dtparam=spi=on
+dtparam=i2c_arm=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+
+# Additional overlays and parameters are documented
+# /boot/firmware/overlays/README
+
+# Automatically load overlays for detected cameras(because OV5647 Is old model)
+camera_auto_detect=0
+
+# Explicitly mapping the camera model
+dtoverlay=ov5647,cam1  # IF WE DONT PUT ANY JUMPERS IN THE BOARD @ J6 (i.e meant for CAM0)
+
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=1
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows
+arm_boost=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[all]
+
+
+
+5.2 For camera2 (i.e. cam0) configuration is shown below
+Place 2 jumpers on J6 Vertically.
+# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+#dtparam=i2s=on
+#dtparam=spi=on
+dtparam=i2c_arm=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+
+# Disable automatic camera detection
+camera_auto_detect=0
+
+# CAM1 - Existing camera Raspberry PI
+dtoverlay=ov5647,cam1
+
+# CAM0 - Second camera NV_Cam
+dtoverlay=ov5647,cam0
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=1
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows
+arm_boost=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[all]
+
+
+6.1: # Hit "Ctrl + O" & Enter & "Ctrl+X"->EXITS the .txt file
+6.2: type sudo reboot for the effects to take place.
+
+7. xdtpi1@raspberrypi:~ $ rpicam-hello --list-cameras
+Available cameras
+-----------------
+0 : ov5647 [2592x1944 10-bit GBRG] (/base/soc/i2c0mux/i2c@1/ov5647@36)
+    Modes: 'SGBRG10_CSI2P' : 640x480 [58.92 fps - (16, 0)/2560x1920 crop]
+                             1296x972 [46.34 fps - (0, 0)/2592x1944 crop]
+                             1920x1080 [32.81 fps - (348, 434)/1928x1080 crop]
+                             2592x1944 [15.63 fps - (0, 0)/2592x1944 crop]
+
+
+**Note: Check if the cable is connected properly and is the cable not broken or cut else use a new connector(connector issue(90%), 10 percent is cam issue/mis-orientation) else it wont detect because the config.txt is very valid.**
+
+8. Detection of the I2C channels
+xdtpi1@raspberrypi:~ $ i2cdetect -l
+i2c-0   i2c             i2c-22-mux (chan_id 0)                  I2C adapter
+i2c-1   i2c             bcm2835 (i2c@7e804000)                  I2C adapter
+i2c-10  i2c             i2c-22-mux (chan_id 1)                  I2C adapter
+i2c-20  i2c             fef04500.i2c                            I2C adapter
+i2c-21  i2c             fef09500.i2c                            I2C adapter
+i2c-22  i2c             bcm2835 (i2c@7e205000)                  I2C adapter
+
+9. xdtpi1@raspberrypi:~ $ sudo i2cdetect -y 10 (This only use if we want 2 cameras)
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:                         -- -- -- -- 0c -- -- --
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 2f
+30: -- -- -- -- -- -- UU -- -- -- -- -- -- -- -- --
+40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+50: -- 51 -- -- -- -- -- -- -- -- -- -- -- -- -- --
+60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+70: -- -- -- -- -- -- -- --
+
+10. xdtpi1@raspberrypi:~ $ ls -l /dev/i2c-10
+crw-rw---- 1 root i2c 89, 10 Nov  5 08:31 /dev/i2c-10
+
+
+#To run an RTSP stream headlessly without any crashing or configuration issues, we can use the native VLC media engine directly from your terminal session
+Run the below command:
+	rpicam-vid -t 0 --inline --codec libav --libav-format mpegts -o - --width 640 --height 480 --framerate 30 --nopreview | cvlc stream:///dev/stdin --sout '#rtp{sdp=rtsp://:8554/stream1}'
+
+
+How to watch it on your computer:
+
+1. Open VLC Media Player on your Windows laptop.
+2. Press Ctrl + N (or go to Media -> Open Network Stream).
+3. Enter your Raspberry Pi's IP address formatted precisely like this:text
+		rtsp://<YOUR_RASPBERRY_PI_IP>:8554/stream1
+note: port number can be changed i.e. 8554
+
+
+
+*********************** MEDIA MTX FOR DUAL CAMERA*********************
+1. Enable api: initially by default as it is set as false, change it to api: true
+2. add this line: rtspTransports: [tcp],  comment( rtspTransports: [udp, multicast, tcp] )
+3. change the rtsp port# to some other number: rtspAddress: :6000
+4. finally at the end of the scripts in "paths:" section, add the below way(exactly):
+
+paths:
+  cam1:
+    source: rpiCamera
+    sourceOnDemand: no
+
+    # CAM1 - Night Vision
+    rpiCameraCamID: 0
+
+    rpiCameraWidth: 1280
+    rpiCameraHeight: 720
+    rpiCameraFPS: 30
+
+    rpiCameraCodec: hardwareH264
+    rpiCameraBitrate: 3000000
+    rpiCameraIDRPeriod: 30
+
+  cam0:
+    source: rpiCamera
+    sourceOnDemand: no
+
+    # CAM0 - Raspberry Pi Camera / Normal Camera
+    rpiCameraCamID: 1
+
+    rpiCameraWidth: 1280
+    rpiCameraHeight: 720
+    rpiCameraFPS: 30
+
+    rpiCameraCodec: hardwareH264
+    rpiCameraBitrate: 3000000
+    rpiCameraIDRPeriod: 30
+  #all_others:
+
+
+Optional (Custom config path):
+
+paths:
+  cam1:
+    source: rpiCamera
+    sourceOnDemand: no
+
+    # CAM1 - Raspberry pi or Normal older version OV5647
+    rpiCameraCamID: 0
+
+    rpiCameraWidth: 1280
+    rpiCameraHeight: 720
+    rpiCameraFPS: 30
+
+    rpiCameraCodec: hardwareH264
+    rpiCameraBitrate: 3000000
+    rpiCameraIDRPeriod: 30
+  #cam0 is hawkeye
+  HAWKEYE:
+    source: rpiCamera
+    sourceOnDemand: no
+
+    # Raspberry Pi Fisheye Camera 5MP - 160° Wide Angle
+    rpiCameraCamID: 1
+
+    rpiCameraWidth: 1280
+    rpiCameraHeight: 720
+    rpiCameraFPS: 30
+
+    rpiCameraCodec: hardwareH264
+    rpiCameraBitrate: 3000000
+    rpiCameraIDRPeriod: 30
+  #all_others:
+
+
+5. Then ctrl+o -> Enter -> Ctrl+X
+5.2: Create a .m3u using notepad and save it as .m3u for viewing your custom names
+5.3: add these lines inside the file:
+#EXTM3U
+#EXTINF:-1,NormalCAM
+rtsp://192.168.10.144:6000/cam1
+
+#EXTINF:-1,HAWKEYE - Raspberry Pi Fisheye 5MP 160°
+rtsp://192.168.10.144:6000/HAWKEYE
+
+5.4: Open the VLC( Ctrl + O -> select Media Files -> choose the .m3u file) and then go back to the terminal page and run the media MTX server.
+
+6. Run the mediamtx-server using "./mediamtx" command.
+7. Open the VLC media and hit Ctrl+N and paste this: 
+rtsp://192.168.10.144:6000/cam1  (rtsp://IP_Raspberrypi_system:6000/custom_name)
+
+8. To close please close the VLC and then hit Ctrl + C
+
+
+*Very important distinction*: i.e cam1 mapped to rpiCameraCamID 0  and cam0 mapped to rpiCameraCamID 1
+Device-tree path	Physical camera connector	Camera index
+i2c@0	                       CAM0	                     1
+i2c@1	                       CAM1	                     0
+
+
+
+
+** If we use raspi cam v2.1
+For Raspberry V2.1 Config is below:
+
+# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+#dtparam=i2s=on
+#dtparam=spi=on
+dtparam=i2c_arm=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+
+# Disable automatic camera detection
+camera_auto_detect=0
+
+# CAM1 - Existing camera Raspberry PI/Night Vision
+dtoverlay=ov5647,cam1
+
+# CAM0 - Second camera NV_Cam
+#dtoverlay=ov5647,cam0 #For second Night Vision Camera
+
+#For raspberry pi v2.1 camera(IMX219 sensor);
+dtoverlay=imx219,cam0
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=1
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows
+arm_boost=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[all]

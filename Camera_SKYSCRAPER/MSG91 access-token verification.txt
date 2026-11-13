@@ -1,0 +1,32 @@
+IF MSG91 access-token verification issue
+1. sudo journalctl -u skyscraper --since "15 minutes ago" --no-pager | grep -i -E 'msg91|verifyAccessToken'
+2. IF YOU SEE SOMETHING LIKE THIS:
+	The log confirms the real issue:
+MSG91 verifyAccessToken response:
+type: error
+code: 418
+message: AuthenticationFailure
+
+3. This is an MSG91 authentication failure, not an ordinary invalid OTP response. The backend is receiving a response from MSG91, but MSG91 is rejecting authentication for the verification request.
+
+We should check the MSG91 AuthKey and verification API configuration before changing the frontend or OTP extraction code.
+
+We have identified the likely root cause. MSG91 officially documents error 418 as IP not whitelisted. Your MSG91 AuthKey likely has API/IP security enabled, and the public IP of your Raspberry Pi’s internet connection is not on its whitelist. MSG91 sees the public outgoing IP of the network hosting your backend.
+
+4. RUN 
+$ curl -4 https://api.ipify.org
+$ echo
+
+5. Step 15 — Whitelist the IP in MSG91
+1. Log in to your MSG91 dashboard.
+2. Navigate to Authkey.
+3. Locate the AuthKey used by your SKYSCRAPER backend.
+4. Click the Edit icon under Actions.
+5. Find IP Security / Whitelisted IPs.
+6. Add the public IP obtained in Step 14.
+7. Save the changes.
+
+OR TYPE IT IN THIS BOX: Whitelist IP Address (Always enable manually add the public IP using by first running the command in Step 4) 
+then add the ip inside the whitelist box and hit add.
+
+ex: 223.185.130.37 and hit the + symbol.
