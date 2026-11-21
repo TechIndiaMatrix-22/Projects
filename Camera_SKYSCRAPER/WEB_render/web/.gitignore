@@ -1,0 +1,50 @@
+# Python environments
+.skyrender/
+.venv/
+venv/
+env/
+
+# Python cache and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs and generated files
+*.log
+.DS_Store
+Thumbs.db
+
+# Local backups and archives
+*.bak
+*.tar
+*.tar.gz
+*.zip
+backups/
+
+# Local tunnel and service configuration
+ngrok.yml
+tp.yml
+msg91
+
+# Project-specific backup files
+*.backup*
+*.before_*
+*.bak
+backups_before_*/
