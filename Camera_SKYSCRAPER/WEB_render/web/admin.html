@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08090c"><title>SKYSCRAPER — Admin Portal</title><link rel="stylesheet" href="/static/css/style.css"></head>
+<body class="auth-body"><main class="auth-shell"><div class="brand"><img class="brand-logo" src="/static/images/skyscraper-logo.png" alt="SKYSCRAPER"></div>
+<section class="auth-card"><div class="eyebrow">SECURE ADMINISTRATION</div><h1>Administrator portal</h1>
+{% if authenticated %}
+<p class="muted">Signed in as {{ admin_username }}</p>
+<div class="panel"><h2>Customer accounts</h2><form id="create-customer"><label>Username<input name="username" required minlength="3"></label><label>Temporary password<input name="password" type="password" required minlength="10"></label><label>Country calling code<input name="country_code" value="91"></label><label>Mobile number (optional)<input name="phone" type="tel"></label><button class="primary wide">CREATE CUSTOMER</button></form><p id="message" class="message" role="status"></p><div id="users"></div><button id="logout" class="secondary wide" type="button">LOG OUT</button></div>
+<script>
+const msg=document.getElementById('message');
+async function loadUsers(){const r=await fetch('/api/admin/users');if(!r.ok){msg.textContent='Could not load users';return}const users=await r.json();const box=document.getElementById('users');box.innerHTML='';users.forEach(u=>{const row=document.createElement('div');row.className='panel';const label=document.createElement('span');label.textContent=`${u.username} — ${u.role} — ${u.created_at}`;row.style.display='flex';row.style.alignItems='center';row.style.justifyContent='space-between';row.style.flexWrap='wrap';row.style.gap='12px';row.append(label);if(u.role==='customer'){const b=document.createElement('button');b.type='button';b.textContent='DELETE';b.style.cssText='margin-left:auto;background:#dc2626;color:#fff;border:1px solid #dc2626;border-radius:6px;padding:9px 18px;font-weight:700;cursor:pointer;';b.addEventListener('click',async()=>{if(!confirm(`Delete ${u.username}?`))return;const d=await fetch('/api/admin/users/'+encodeURIComponent(u.username),{method:'DELETE'});msg.textContent=d.ok?'Customer deleted':'Delete failed';loadUsers()});row.append(b)}box.append(row)})}
+document.getElementById('create-customer').addEventListener('submit',async e=>{e.preventDefault();const r=await fetch('/api/admin/users',{method:'POST',body:new FormData(e.target)});const d=await r.json();msg.textContent=d.message||d.detail||'Request failed';if(r.ok){e.target.reset();loadUsers()}});
+document.getElementById('logout').addEventListener('click',async()=>{await fetch('/api/logout',{method:'POST'});location.href='/'});loadUsers();
+</script>
+{% else %}
+<form id="login"><label>Administrator username<input name="username" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="primary wide">ADMIN SIGN IN →</button></form><p id="message" class="message" role="status"></p>
+<script>document.getElementById('login').addEventListener('submit',async e=>{e.preventDefault();const r=await fetch('/api/login',{method:'POST',body:new FormData(e.target)});const d=await r.json();if(!r.ok){document.getElementById('message').textContent=d.detail||'Sign in failed';return}location.href=d.redirect||'/manage'});</script>
+{% endif %}
+</section><footer>SKYSCRAPER · ADMIN PORTAL</footer></main></body></html>
